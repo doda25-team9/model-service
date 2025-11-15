@@ -60,5 +60,72 @@ Once its startup has finished, you can either access [localhost:8081/apidocs](ht
       "sms": "test ..."
     }
 
+## Requirements
 
+- Docker with Buildx support
+- Trained model files (generated separately, not included in repo)
 
+## Building and Running (F3)
+
+Build the Docker image:
+```
+docker build -t model-service:latest .
+```
+
+Run the container (requires trained models in output/ folder):
+```
+docker run -p 8081:8081 -v ./output:/app/output model-service:latest
+```
+
+The service starts on port 8081.
+
+Test the API:
+```
+curl -X POST "http://localhost:8081/predict" -H "Content-Type: application/json" -d '{"sms": "Win a free prize!"}'
+```
+
+Or visit: http://localhost:8081/apidocs
+
+## Multi-Architecture Support (F4)
+
+Supports both amd64 (Intel/AMD) and arm64 (Apple Silicon, ARM servers).
+
+Setup multi-platform builder (first time only):
+```
+docker buildx create --name multiarch-builder --use
+docker buildx inspect --bootstrap
+```
+
+Build for both architectures:
+```
+docker buildx build --platform linux/amd64,linux/arm64 -t model-service:latest .
+```
+
+Build for specific architecture:
+```
+docker buildx build --platform linux/arm64 -t model-service:latest --load .
+docker buildx build --platform linux/amd64 -t model-service:latest --load .
+```
+
+## Testing App and Model-Service Together
+
+Terminal 1 - Start model-service:
+```
+cd model-service
+docker run -p 8081:8081 -v ./output:/app/output model-service:latest
+```
+
+Terminal 2 - Start app:
+```
+cd app
+docker run -p 8080:8080 -e MODEL_HOST=http://host.docker.internal:8081 app:latest
+```
+
+Terminal 3 - Test:
+```
+curl http://localhost:8080/sms
+```
+
+Or open browser: http://localhost:8080/sms
+
+Type a message and click Check to verify the app communicates with the model service.
