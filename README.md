@@ -121,11 +121,8 @@ cd app
 docker run -p 8080:8080 -e MODEL_HOST=http://host.docker.internal:8081 app:latest
 ```
 
-Terminal 3 - Test:
-```
-curl http://localhost:8080/sms
-```
+Terminal 3 - Test in browser:
 
-Or open browser: http://localhost:8080/sms
+Open: http://localhost:8080/sms
 
-Type a message and click Check to verify the app communicates with the model service.
+Type a message (e.g., "Win a free prize!") and click Check to verify the app communicates with the model service and returns a spam/ham prediction.
