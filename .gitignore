@@ -1,0 +1,17 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment folders
+venv/
+.env/
+
+# Model outputs
+output/
+*.pickle
+*.pkl
+
+# OS
+.DS_Store
