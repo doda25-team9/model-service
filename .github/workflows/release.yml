@@ -19,10 +19,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Determine version from tag
+      - name: Read version from version.py
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION=$(grep "__version__" src/version.py | sed -E "s/.*\"(.*)\"/\1/")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
@@ -46,5 +46,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/doda25-team9/model-service:${{ steps.version.outputs.version }}
+            ghcr.io/doda25-team9/model-service:${{ steps.version.outputs.VERSION }}
             ghcr.io/doda25-team9/model-service:latest
