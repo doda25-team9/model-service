@@ -148,7 +148,8 @@ Whenever a new release is needed for the model-service repository, only this fil
 
 ### How the Workflow Works
 
-When the workflow is triggered (e.g., by pushing a new git tag), the pipeline:
+This workflow is triggered whenever a new Git tag matching the pattern `v*` is pushed.
+Once triggered, the pipeline executes the following steps:
 
 1. Checks out the repository
 2. Reads the version number from `src/version.py`
