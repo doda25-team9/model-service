@@ -62,7 +62,7 @@ Once its startup has finished, you can either access [localhost:8081/apidocs](ht
 - Docker with Buildx support
 - Trained model files (generated separately, not included in repo)
 
-## Building and Running (F3)
+## Building and Running (F3 & F6)
 
 Build the Docker image:
 
@@ -77,6 +77,14 @@ docker run -p 8081:8081 -v ./output:/app/output model-service:latest
 ```
 
 The service starts on port 8081.
+
+You can also change the port by specifying `MODEL_PORT` env:
+
+```
+docker run -p 8082:8082 -e MODEL_PORT=8082 -v ./output:/app/output model-service:latest
+```
+
+Run the container (requires trained models in output/ folder):
 
 Test the API:
 
