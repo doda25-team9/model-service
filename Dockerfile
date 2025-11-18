@@ -17,6 +17,8 @@ COPY smsspamcollection/ ./smsspamcollection/
 # Create output directory for models
 RUN mkdir -p output
 
+ENV MODEL_PORT=8081
+
 # Expose port 8081
 EXPOSE 8081
 
