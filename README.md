@@ -182,3 +182,28 @@ docker run -p 8081:8081 -v ./output:/app/output ghcr.io/doda25-team9/model-servi
 ```
 
 To note: to run the above image, you need the trained models in your `/output` file locally. Check the section "Training the Model" above to ensure you have them in the correct folder.
+
+## Automated container image releases (F9)
+
+Run the (`.github/workflows/train_release_model.yml`) to train and release the model. This will create a new release and attach the model and other related files. The release version is taken from `src/version.py`.
+
+You can run it in the repo (Actions tab → Train and release the model).
+
+The workflow will:
+- Install dependencies
+- Preprocess data
+- Train the model
+- Create a GitHub Release with version from `src/version.py`
+- Attach model files as downloadable assets
+
+**The workflow will fail if a release with the same tag already exists!**
+To resolve this you can either delete the existing release or increment the version in `src/version.py` and create and push a new tag from the version.
+
+### Download models
+Once complete, find your release at:
+[Releases Page](https://github.com/doda25-team9/model-service/releases)
+
+The files attached to the release are:
+* model (in our case a decision tree)
+* preprocessed data
+* preprocessor (needed to run the model)
