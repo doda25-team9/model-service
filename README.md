@@ -207,3 +207,16 @@ The files attached to the release are:
 * model (in our case a decision tree)
 * preprocessed data
 * preprocessor (needed to run the model)
+
+## No hard-coded model in model-service (F10)
+
+By default, the image has pre-fetched the model from a release. To replace it with a custom model, add the model via volume mount as follows. 
+
+```
+docker run -it --rm -p8081:8081 \
+    -v ./output/:/app/output/   `# Provide the model files with volume mount` \
+    model-service
+```
+
+If your trained model is stored elsewhere, replace the FROM part of the model mount with your path. 
+**Note: the mounted folder has to contain both the `model.joblib` and `preprocessor.joblib` files!**
