@@ -6,3 +6,5 @@ output/
 *.pickle
 *.pkl
 
+# Python env files
+venv/
