@@ -60,7 +60,7 @@ def predict():
     
     res = {
         "result": prediction,
-        "classifier": "decision tree",
+        "classifier": type(model).__name__,
         "sms": sms
     }
     print(res)
