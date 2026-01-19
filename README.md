@@ -61,10 +61,10 @@ Once its startup has finished, you can either access [localhost:8081/apidocs](ht
 
 Models are versioned separately from service code.
 
-1. **Release model files** as GitHub Release (e.g., v0.3.0)
+1. **Release model files** as GitHub Release (e.g., v0.2.0)
 2. **Update** `operation/.env`:
 ```bash
-   MODEL_VERSION=v0.3.0
+   MODEL_VERSION=v0.2.0
 ```
 3. **Restart**:
 ```bash
