@@ -7,9 +7,11 @@ The following sections will explain you how to get started.
 The project **requires a Python 3.12 environment** to run (tested with 3.12.9).
 Use the `requirements.txt` file to restore the required dependencies in your environment.
 
-### Training the Model
+## Training the Model
 
-To train the model, you have two options.
+The model can be trained by triggering `train_release_model.yml` workflow on Github Actions. This will create a new Github release and attach the required files there.
+
+However, if you want train the model locally, you have multiple options.
 Either you create a local environment...
 
     $ python -m venv venv
@@ -36,26 +38,6 @@ Once all dependencies have been installed, the data can be preprocessed and the 
     $ python src/text_classification.py
 
 The resulting model files will be placed as `.joblib` files in the `output/` folder.
-
-### Serving Recommendations
-
-To make the models accessible, you need to start the microservice by running the `src/serve_model.py` script from within the virtual environment that you created before, or in a fresh Docker container (recommended):
-
-    $ docker run -it --rm -p 8081:8081 -v ./:/root/sms/ python:3.12.9-slim bash
-    ... (container startup)
-    $ cd /root/sms/
-    $ pip install -r requirements.txt
-    $ python src/serve_model.py
-
-The server will start on port 8081.
-Once its startup has finished, you can either access [localhost:8081/apidocs](http://localhost:8081/apidocs) in your browser to interact with the service, or you send `POST` requests to request predictions, for example with `curl`:
-
-    $ curl -X POST "http://localhost:8081/predict" -H "Content-Type: application/json" -d '{"sms": "test ..."}'
-    {
-      "classifier": "decision tree",
-      "result": "ham",
-      "sms": "test ..."
-    }
 
 ## Requirements
 
@@ -210,7 +192,7 @@ The files attached to the release are:
 
 ## No hard-coded model in model-service (F10)
 
-By default, the image has pre-fetched the model from a release. To replace it with a custom model, add the model via volume mount as follows. 
+By default, when the container is started, it will donwload a specified model. To replace it with a custom model, add the model via volume mount as follows. 
 
 ```
 docker run -it --rm -p8081:8081 \

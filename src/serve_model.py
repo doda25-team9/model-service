@@ -3,20 +3,22 @@ Flask API of the SMS Spam detection model model.
 """
 import os
 
-import joblib
 from flask import Flask, jsonify, request, Response
 from flasgger import Swagger
 from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 import time
-import pandas as pd
 
-from text_preprocessing import prepare, _extract_message_len, _text_process
+from setup_model import get_model_and_preprocessor
+from text_preprocessing import _extract_message_len, _text_process # Needed to deserialize the preprocessor
 
 app = Flask(__name__)
 swagger = Swagger(app)
 
 # Get model version from environment
 MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
+MODEL_PORT = int(os.getenv('MODEL_PORT', 8081))
+
+model, preprocessor = get_model_and_preprocessor()
 
 # Prometheus metrics
 predictions_total = Counter('model_predictions_total', 'Total predictions', ['version', 'result'])
@@ -50,8 +52,7 @@ def predict():
     
     input_data = request.get_json()
     sms = input_data.get('sms')
-    processed_sms = prepare(sms)
-    model = joblib.load('output/model.joblib')
+    processed_sms = preprocessor.transform([sms])
     prediction = model.predict(processed_sms)[0]
     
     # Record metrics
@@ -71,6 +72,4 @@ def metrics():
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
 if __name__ == '__main__':
-    #clf = joblib.load('output/model.joblib')
-    port = int(os.environ.get('MODEL_PORT'))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=MODEL_PORT, debug=True)
