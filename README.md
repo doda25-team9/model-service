@@ -49,7 +49,7 @@ To make the models accessible, you need to start the microservice by running the
     $ pip install -r requirements.txt
     $ python src/serve_model.py
 
-The server will start on port 8081.
+The server will start on port 8081 (default). The model is loaded once at startup to ensure low-latency predictions.
 Once its startup has finished, you can either access [localhost:8081/apidocs](http://localhost:8081/apidocs) in your browser to interact with the service, or you send `POST` requests to request predictions, for example with `curl`:
 
     $ curl -X POST "http://localhost:8081/predict" -H "Content-Type: application/json" -d '{"sms": "test ..."}'
