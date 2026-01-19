@@ -18,6 +18,10 @@ swagger = Swagger(app)
 # Get model version from environment
 MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
 
+# Load the trained model only once when starting the service
+print("LOADING MODEL FROM DISK...")
+MODEL = joblib.load('output/model.joblib')
+
 # Prometheus metrics
 predictions_total = Counter('model_predictions_total', 'Total predictions', ['version', 'result'])
 prediction_latency = Histogram('model_prediction_latency_seconds', 'Prediction latency', ['version'])
@@ -51,8 +55,7 @@ def predict():
     input_data = request.get_json()
     sms = input_data.get('sms')
     processed_sms = prepare(sms)
-    model = joblib.load('output/model.joblib')
-    prediction = model.predict(processed_sms)[0]
+    prediction = MODEL.predict(processed_sms)[0]
     
     # Record metrics
     predictions_total.labels(version=MODEL_VERSION, result=prediction).inc()
@@ -60,7 +63,7 @@ def predict():
     
     res = {
         "result": prediction,
-        "classifier": type(model).__name__,
+        "classifier": type(MODEL).__name__,
         "sms": sms
     }
     print(res)
@@ -72,5 +75,5 @@ def metrics():
 
 if __name__ == '__main__':
     #clf = joblib.load('output/model.joblib')
-    port = int(os.environ.get('MODEL_PORT'))
+    port = int(os.environ.get('MODEL_PORT', 8081))
     app.run(host="0.0.0.0", port=port, debug=True)
