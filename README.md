@@ -57,6 +57,25 @@ Once its startup has finished, you can either access [localhost:8081/apidocs](ht
       "sms": "test ..."
     }
 
+### Updating the ML Model
+
+Models are versioned separately from service code.
+
+1. **Release model files** as GitHub Release (e.g., v0.3.0)
+2. **Update** `operation/.env`:
+```bash
+   MODEL_VERSION=v0.3.0
+```
+3. **Restart**:
+```bash
+   docker-compose restart model-service
+```
+
+The service downloads the new model automatically.
+
+**Note:** Model version is independent of service version.
+
+
 ## Requirements
 
 - Docker with Buildx support
