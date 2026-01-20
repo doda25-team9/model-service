@@ -1,27 +1,46 @@
-name: Release Model-Service Image
+name: Release Model-Service Container
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
 
 jobs:
   build-and-push:
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
 
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+          ref: main
 
-      - name: Read version from version.py
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Get release version
         id: version
         run: |
-          VERSION=$(grep "__version__" src/version.py | sed -E "s/.*\"(.*)\"/\1/")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          CURRENT=$(grep "__version__" src/version.py | sed -E 's/.*"(.*)"/\1/')
+          echo "Current version: $CURRENT"
+          echo "release=$CURRENT" >> $GITHUB_OUTPUT
+
+      - name: Commit release version
+        run: |
+          git add src/version.py
+          git commit -m "chore: release container version ${{ steps.version.outputs.release }}" || echo "No changes to commit"
+
+      - name: Create release tag
+        run: git tag -a "container-v${{ steps.version.outputs.release }}" -m "Release container version ${{ steps.version.outputs.release }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -44,5 +63,24 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/doda25-team9/model-service:${{ steps.version.outputs.version }}
+            ghcr.io/doda25-team9/model-service:${{ steps.version.outputs.release }}
             ghcr.io/doda25-team9/model-service:latest
+
+      - name: Bump to next development version
+        run: |
+          CURRENT="${{ steps.version.outputs.release }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT_PATCH=$((PATCH + 1))
+          NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+          sed -i "s/__version__ = \".*\"/__version__ = \"$NEXT_VERSION\"/" src/version.py
+          echo "Bumped to: $NEXT_VERSION"
+
+      - name: Commit development version
+        run: |
+          git add src/version.py
+          git commit -m "chore: bump to next development version [skip ci]"
+
+      - name: Push changes
+        run: |
+          git push origin main
+          git push origin --tags
