@@ -3,7 +3,7 @@ name: Release Model-Service Container
 on:
   push:
     branches:
-      - main
+      - testversioning
 
 jobs:
   build-and-push:
@@ -20,7 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT }}
-          ref: main
+          ref: testversioning
 
       - name: Configure Git
         run: |
@@ -82,5 +82,5 @@ jobs:
 
       - name: Push changes
         run: |
-          git push origin main
+          git push origin testversioning
           git push origin --tags
