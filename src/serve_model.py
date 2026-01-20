@@ -10,7 +10,7 @@ from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 import time
 import pandas as pd
 
-from text_preprocessing import prepare, _extract_message_len, _text_process
+from text_preprocessing import _extract_message_len, _text_process
 
 app = Flask(__name__)
 swagger = Swagger(app)
