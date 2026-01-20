@@ -19,8 +19,11 @@ swagger = Swagger(app)
 MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
 
 # Load the trained model only once when starting the service
+MODEL_DIR = os.getenv('MODEL_DIR', '/app/output')
 print("LOADING MODEL FROM DISK...")
-MODEL = joblib.load('output/model.joblib')
+model = joblib.load(f'{MODEL_DIR}/model.joblib')
+preprocessor = joblib.load(f'{MODEL_DIR}/preprocessor.joblib')
+print(f"Model loaded successfully: {type(model).__name__}")
 
 # Prometheus metrics
 predictions_total = Counter('model_predictions_total', 'Total predictions', ['version', 'result'])
@@ -55,7 +58,7 @@ def predict():
     input_data = request.get_json()
     sms = input_data.get('sms')
     processed_sms = prepare(sms)
-    prediction = MODEL.predict(processed_sms)[0]
+    prediction = model.predict(processed_sms)[0]
     
     # Record metrics
     predictions_total.labels(version=MODEL_VERSION, result=prediction).inc()
@@ -63,11 +66,14 @@ def predict():
     
     res = {
         "result": prediction,
-        "classifier": type(MODEL).__name__,
+        "classifier": type(model).__name__,
         "sms": sms
     }
     print(res)
     return jsonify(res)
+
+def prepare(message):
+    return preprocessor.transform([message])
 
 @app.route('/metrics')
 def metrics():
