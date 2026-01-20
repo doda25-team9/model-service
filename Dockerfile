@@ -39,7 +39,7 @@ COPY smsspamcollection/ smsspamcollection/
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
-# Create output directory
+# Create the output directory for the volume
 RUN mkdir -p /app/output
 
 ENV MODEL_PORT=8081
