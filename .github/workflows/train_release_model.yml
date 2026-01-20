@@ -12,12 +12,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: 'pip'  # Cache dependencies
+          cache: 'pip'
       
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -34,18 +42,36 @@ jobs:
         id: version
         run: |
           VERSION=$(grep "__version__" src/version.py | sed -E "s/.*\"(.*)\"/\1/")
-          echo "version=v$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Install GitHub CLI
+      - name: Commit release version
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
+          git add src/version.py
+          git commit -m "chore: release model version ${{ steps.version.outputs.version }}" || echo "No changes"
 
-      - name: Authenticate GitHub CLI
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+      - name: Create release tag
+        run: |
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release model version ${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
 
       - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: | 
-          gh release create "${{ steps.version.outputs.version }}" output/*.joblib \
-            --title "Model ${{ steps.version.outputs.version }}" \
+          gh release create "v${{ steps.version.outputs.version }}" output/*.joblib \
+            --title "Model v${{ steps.version.outputs.version }}" \
             --notes "Trained SMS spam detection model ${{ steps.version.outputs.version }}"
+
+      - name: Bump version
+        run: |
+          CURRENT="${{ steps.version.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT_PATCH=$((PATCH + 1))
+          NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+          sed -i "s/__version__ = \".*\"/__version__ = \"$NEXT_VERSION\"/" src/version.py
+
+      - name: Commit and push bump
+        run: |
+          git add src/version.py
+          git commit -m "chore: bump to next version [skip ci]"
+          git push origin main
