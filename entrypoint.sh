@@ -23,20 +23,30 @@ else
     
     # Download model
     echo "Downloading model.joblib..."
-    curl -f -L -o "$MODEL_FILE" "${DOWNLOAD_URL_BASE}/model.joblib" || {
+    if ! curl -L -o "$MODEL_FILE" "${DOWNLOAD_URL_BASE}/model.joblib"; then
         echo "Failed to download model.joblib"
         exit 1
-    }
+    fi
     
     # Download preprocessor
     echo "Downloading preprocessor.joblib..."
-    curl -f -L -o "$PREPROCESSOR_FILE" "${DOWNLOAD_URL_BASE}/preprocessor.joblib" || {
+    if ! curl -L -o "$PREPROCESSOR_FILE" "${DOWNLOAD_URL_BASE}/preprocessor.joblib"; then
         echo "Failed to download preprocessor.joblib"
         exit 1
-    }
+    fi
     
     echo "Download complete"
 fi
+
+# Verify files exist before starting
+if [ ! -f "$MODEL_FILE" ] || [ ! -f "$PREPROCESSOR_FILE" ]; then
+    echo "ERROR: Model files not found after download attempt!"
+    ls -lh "$MODEL_DIR"
+    exit 1
+fi
+
+echo "Models verified. File sizes:"
+ls -lh "$MODEL_FILE" "$PREPROCESSOR_FILE"
 
 # Start service
 echo "Launching Python server..."
