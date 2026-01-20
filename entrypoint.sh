@@ -3,74 +3,73 @@ set -e
 
 # Configuration
 MODEL_DIR="${MODEL_DIR:-/app/output}"
-MODEL_VERSION="${MODEL_VERSION:-v0.1.0}"
+# MODEL_VERSION="${MODEL_VERSION:-v0.1.0}"
+MODEL_VERSION="v0.2.0"
 MODEL_FILE="${MODEL_DIR}/model.joblib"
 PREPROCESSOR_FILE="${MODEL_DIR}/preprocessor.joblib"
-DOWNLOAD_URL_BASE="https://github.com/doda25-team9/model-service/releases/download/${MODEL_VERSION}"
+BASE_URL="https://github.com/doda25-team9/model-service/releases/download/${MODEL_VERSION}"
 
 echo "Starting Model Service..."
 echo "Model directory: ${MODEL_DIR}"
 echo "Model version: ${MODEL_VERSION}"
 
-# Check if both models exist and are valid (non-empty and binary)
-if [ -f "$MODEL_FILE" ] && [ -f "$PREPROCESSOR_FILE" ] && [ -s "$MODEL_FILE" ] && [ -s "$PREPROCESSOR_FILE" ]; then
-    # Check if files are actually binary (not HTML error pages)
-    if file "$MODEL_FILE" | grep -q "data" && file "$PREPROCESSOR_FILE" | grep -q "data"; then
-        echo "Valid models found. Skipping download."
+# Function to check file size
+get_size() {
+    stat -c%s "$1" 2>/dev/null || stat -f%z "$1" 2>/dev/null || echo 0
+}
+
+# Check if models exist and are valid
+if [ -f "$MODEL_FILE" ] && [ -f "$PREPROCESSOR_FILE" ]; then
+    MODEL_SIZE=$(get_size "$MODEL_FILE")
+    PREP_SIZE=$(get_size "$PREPROCESSOR_FILE")
+    
+    if [ "$MODEL_SIZE" -gt 1000 ] && [ "$PREP_SIZE" -gt 1000 ]; then
+        echo "Valid models found (model: ${MODEL_SIZE} bytes, preprocessor: ${PREP_SIZE} bytes)"
+        echo "Skipping download."
     else
-        echo "Models exist but appear corrupted. Re-downloading..."
+        echo "Models too small, re-downloading..."
         rm -f "$MODEL_FILE" "$PREPROCESSOR_FILE"
     fi
 fi
 
-# Download if models don't exist or were corrupted
+# Download if needed
 if [ ! -f "$MODEL_FILE" ] || [ ! -f "$PREPROCESSOR_FILE" ]; then
-    echo "Downloading models..."
-    
-    # Ensure directory exists
+    echo "Downloading models from: ${BASE_URL}"
     mkdir -p "$MODEL_DIR"
     
-    # Download model with proper headers and follow redirects
+    # Download model with verbose output
     echo "Downloading model.joblib..."
-    curl -L \
-         -H "Accept: application/octet-stream" \
-         -o "$MODEL_FILE" \
-         "${DOWNLOAD_URL_BASE}/model.joblib"
+    curl -v -L -o "$MODEL_FILE" "${BASE_URL}/model.joblib" 2>&1 | head -20
     
-    if [ ! -s "$MODEL_FILE" ]; then
-        echo "ERROR: model.joblib download failed or is empty"
-        ls -lh "$MODEL_DIR"
+    MODEL_SIZE=$(get_size "$MODEL_FILE")
+    echo "Downloaded: ${MODEL_SIZE} bytes"
+    
+    if [ "$MODEL_SIZE" -lt 1000 ]; then
+        echo "ERROR: model.joblib download failed (only ${MODEL_SIZE} bytes)"
+        echo "Content of downloaded file:"
+        cat "$MODEL_FILE"
         exit 1
     fi
     
     # Download preprocessor
     echo "Downloading preprocessor.joblib..."
-    curl -L \
-         -H "Accept: application/octet-stream" \
-         -o "$PREPROCESSOR_FILE" \
-         "${DOWNLOAD_URL_BASE}/preprocessor.joblib"
+    curl -v -L -o "$PREPROCESSOR_FILE" "${BASE_URL}/preprocessor.joblib" 2>&1 | head -20
     
-    if [ ! -s "$PREPROCESSOR_FILE" ]; then
-        echo "ERROR: preprocessor.joblib download failed or is empty"
-        ls -lh "$MODEL_DIR"
+    PREP_SIZE=$(get_size "$PREPROCESSOR_FILE")
+    echo "Downloaded: ${PREP_SIZE} bytes"
+    
+    if [ "$PREP_SIZE" -lt 1000 ]; then
+        echo "ERROR: preprocessor.joblib download failed (only ${PREP_SIZE} bytes)"
+        echo "Content of downloaded file:"
+        cat "$PREPROCESSOR_FILE"
         exit 1
     fi
     
-    echo "Download complete"
+    echo "Downloads complete!"
 fi
 
-# Verify files before starting
-echo "Verifying model files..."
+echo "Model files ready:"
 ls -lh "$MODEL_FILE" "$PREPROCESSOR_FILE"
-
-if ! file "$MODEL_FILE" | grep -q "data"; then
-    echo "ERROR: model.joblib is not a valid binary file!"
-    file "$MODEL_FILE"
-    head -20 "$MODEL_FILE"
-    exit 1
-fi
-
-echo "Models verified successfully"
 
 # Start service
 echo "Launching Python server..."
