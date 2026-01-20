@@ -19,7 +19,7 @@ swagger = Swagger(app)
 MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
 
 # Load the trained model only once when starting the service
-MODEL_DIR = os.getenv('MODEL_DIR', '/app/output')
+MODEL_DIR = os.getenv('MODEL_DIR', 'output')
 print("LOADING MODEL FROM DISK...")
 model = joblib.load(f'{MODEL_DIR}/model.joblib')
 preprocessor = joblib.load(f'{MODEL_DIR}/preprocessor.joblib')
