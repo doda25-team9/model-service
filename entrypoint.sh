@@ -3,8 +3,7 @@ set -e
 
 # Configuration
 MODEL_DIR="${MODEL_DIR:-/app/output}"
-# MODEL_VERSION="${MODEL_VERSION:-v0.1.0}"
-MODEL_VERSION="v0.2.0"
+MODEL_VERSION="${MODEL_VERSION:-v0.1.0}"
 MODEL_FILE="${MODEL_DIR}/model.joblib"
 PREPROCESSOR_FILE="${MODEL_DIR}/preprocessor.joblib"
 BASE_URL="https://github.com/doda25-team9/model-service/releases/download/${MODEL_VERSION}"
