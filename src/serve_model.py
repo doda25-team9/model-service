@@ -10,13 +10,20 @@ from prometheus_client import Counter, Histogram, generate_latest, REGISTRY
 import time
 import pandas as pd
 
-from text_preprocessing import prepare, _extract_message_len, _text_process
+from text_preprocessing import _extract_message_len, _text_process
 
 app = Flask(__name__)
 swagger = Swagger(app)
 
 # Get model version from environment
 MODEL_VERSION = os.getenv('MODEL_VERSION', 'v1')
+
+# Load the trained model only once when starting the service
+MODEL_DIR = os.getenv('MODEL_DIR', 'output')
+print("LOADING MODEL FROM DISK...")
+model = joblib.load(f'{MODEL_DIR}/model.joblib')
+preprocessor = joblib.load(f'{MODEL_DIR}/preprocessor.joblib')
+print(f"Model loaded successfully: {type(model).__name__}")
 
 # Prometheus metrics
 predictions_total = Counter('model_predictions_total', 'Total predictions', ['version', 'result'])
@@ -51,7 +58,6 @@ def predict():
     input_data = request.get_json()
     sms = input_data.get('sms')
     processed_sms = prepare(sms)
-    model = joblib.load('output/model.joblib')
     prediction = model.predict(processed_sms)[0]
     
     # Record metrics
@@ -66,11 +72,14 @@ def predict():
     print(res)
     return jsonify(res)
 
+def prepare(message):
+    return preprocessor.transform([message])
+
 @app.route('/metrics')
 def metrics():
     return Response(generate_latest(REGISTRY), mimetype='text/plain')
 
 if __name__ == '__main__':
     #clf = joblib.load('output/model.joblib')
-    port = int(os.environ.get('MODEL_PORT'))
+    port = int(os.environ.get('MODEL_PORT', 8081))
     app.run(host="0.0.0.0", port=port, debug=True)

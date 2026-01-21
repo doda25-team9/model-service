@@ -71,10 +71,6 @@ def _preprocess(messages):
     dump(preprocessed_data, 'output/preprocessed_data.joblib')
     return preprocessed_data
 
-def prepare(message):
-    preprocessor = load('output/preprocessor.joblib')
-    return preprocessor.transform([message])
-
 
 def main():
     messages = _load_data()
